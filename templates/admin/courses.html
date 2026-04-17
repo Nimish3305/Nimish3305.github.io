@@ -1,0 +1,160 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Courses — Admin{% endblock %}
+{% block page_title %}Courses & Content{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title-wrap">
+    <div class="page-icon" style="background:rgba(139,92,246,.12); color:var(--purple);">🔬</div>
+    <div><div class="page-h1">Courses</div><div class="page-sub">Manage experiments and digital books per level</div></div>
+  </div>
+  <div style="display:flex; gap:.5rem;">
+    <button class="btn btn-outline" onclick="openModal('addBookModal')">📘 Add Book</button>
+    <button class="btn btn-primary" onclick="openModal('addExpModal')">+ Add Experiment</button>
+  </div>
+</div>
+
+<!-- Level Filter Tabs -->
+<div style="display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:1.5rem;">
+  <a href="{{ url_for('admin_courses') }}" class="btn {% if not level_filter %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">All</a>
+  {% for lvl in ROBOTICS_LEVELS %}
+  <a href="{{ url_for('admin_courses') }}?level={{ lvl|replace(' ', '+') }}" class="btn {% if level_filter==lvl %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">
+    {{ lvl.split(': ')[1] }}
+  </a>
+  {% endfor %}
+</div>
+
+<!-- Experiments -->
+{% if experiments %}
+<div style="display:flex; flex-direction:column; gap:.6rem; margin-bottom:2rem;">
+  {% for e in experiments %}
+  <div class="exp-item">
+    <div class="exp-num">{{ e.exp_number }}</div>
+    <div class="exp-info">
+      <div class="exp-title">EXP {{ e.exp_number }}: {{ e.title }}</div>
+      <div class="exp-desc">{{ e.description or 'No description' }}</div>
+      <div class="exp-meta">
+        <span class="level-pill" style="font-size:.72rem; padding:.2rem .6rem;">{{ e.level }}</span>
+        {% if e.video_url %}<span>🎬 Video</span>{% endif %}
+        {% if e.file_path %}<span>📎 File</span>{% endif %}
+      </div>
+    </div>
+    <div style="display:flex; gap:.4rem;">
+      <form method="POST" action="{{ url_for('admin_delete_experiment', eid=e.id) }}" data-confirm="Delete experiment '{{ e.title }}'?">
+        <button class="btn btn-icon btn-ghost" type="submit">🗑️</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card mb-3">
+  <div class="empty-state" style="padding:2rem;">
+    <span class="empty-icon">🔬</span>
+    <div class="empty-title">No experiments yet</div>
+    <div class="empty-desc">Add experiments for each robotics level.</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Digital Books -->
+{% if books %}
+<div class="fw-700 mb-2" style="font-size:1rem;">📘 Digital Books</div>
+<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:1rem; margin-bottom:2rem;">
+  {% for b in books %}
+  <div class="card" style="text-align:center;">
+    <div style="font-size:3rem; margin-bottom:.5rem;">{{ b.cover_emoji }}</div>
+    <div class="fw-700">{{ b.title }}</div>
+    <div class="text-xs text-muted mt-1">{{ b.level or 'All levels' }}</div>
+    {% if b.file_path %}
+    <a href="{{ url_for('serve_upload', filename=b.file_path) }}" class="btn btn-outline btn-sm mt-2" target="_blank">📥 Download</a>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Add Experiment Modal -->
+<div class="modal-overlay hidden" id="addExpModal">
+  <div class="modal" style="max-width:580px;">
+    <div class="modal-header">
+      <div class="modal-title">+ Add Experiment</div>
+      <button class="modal-close" onclick="closeModal('addExpModal')">×</button>
+    </div>
+    <form method="POST" action="{{ url_for('admin_add_experiment') }}" enctype="multipart/form-data">
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Experiment Title *</label>
+          <input type="text" name="title" class="form-control" placeholder="e.g. LED Circuit" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Exp Number *</label>
+          <input type="number" name="exp_number" class="form-control" placeholder="1" required min="1">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Robotics Level *</label>
+        <select name="level" class="form-control" required>
+          <option value="">Select level…</option>
+          {% for lvl in ROBOTICS_LEVELS %}
+          <option value="{{ lvl }}">{{ lvl }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea name="description" class="form-control" rows="2" placeholder="Brief description of the experiment…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Video URL (YouTube/Vimeo)</label>
+        <input type="url" name="video_url" class="form-control" placeholder="https://youtube.com/watch?v=...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Upload File (PDF, Doc, etc.)</label>
+        <input type="file" name="file" class="form-control">
+      </div>
+      <div style="display:flex; gap:.75rem; margin-top:.5rem;">
+        <button class="btn btn-primary" type="submit">+ Add Experiment</button>
+        <button class="btn btn-ghost" type="button" onclick="closeModal('addExpModal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Book Modal -->
+<div class="modal-overlay hidden" id="addBookModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📘 Add Digital Book</div>
+      <button class="modal-close" onclick="closeModal('addBookModal')">×</button>
+    </div>
+    <form method="POST" action="{{ url_for('admin_add_book') }}" enctype="multipart/form-data">
+      <div class="form-group">
+        <label class="form-label">Book Title *</label>
+        <input type="text" name="title" class="form-control" required placeholder="e.g. Electronics Fundamentals">
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Level</label>
+          <select name="level" class="form-control">
+            <option value="">All levels</option>
+            {% for lvl in ROBOTICS_LEVELS %}<option>{{ lvl }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cover Emoji</label>
+          <input type="text" name="cover_emoji" class="form-control" value="📘" maxlength="4">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Upload PDF</label>
+        <input type="file" name="file" class="form-control" accept=".pdf">
+      </div>
+      <div style="display:flex; gap:.75rem; margin-top:.5rem;">
+        <button class="btn btn-primary" type="submit">📘 Add Book</button>
+        <button class="btn btn-ghost" type="button" onclick="closeModal('addBookModal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

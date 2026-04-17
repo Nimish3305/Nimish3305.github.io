@@ -1,0 +1,48 @@
+{% extends 'student/base_student.html' %}
+{% block title %}My Results — Student Portal{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-title-wrap">
+    <div class="page-icon" style="background:rgba(16,185,129,.12);color:var(--accent);">📊</div>
+    <div><div class="page-h1">My Results</div><div class="page-sub">Exam history and scores</div></div>
+  </div>
+</div>
+{% if attempts %}
+{% set passed = attempts|selectattr('passed')|list|length %}
+{% set avg = (attempts|sum(attribute='percentage')/attempts|length)|round(1) %}
+<div class="stats-row mb-3">
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(79,70,229,.12);">📝</div>
+    <div><div class="stat-number">{{ attempts|length }}</div><div class="stat-label">Total Attempts</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(16,185,129,.12);">🏆</div>
+    <div><div class="stat-number">{{ passed }}</div><div class="stat-label">Passed</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(245,158,11,.12);">📊</div>
+    <div><div class="stat-number">{{ avg }}%</div><div class="stat-label">Average Score</div></div></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:.65rem;">
+  {% for a in attempts %}
+  <a href="{{ url_for('student_exam_result', aid=a.id) }}" style="text-decoration:none;color:inherit;">
+    <div class="item-row">
+      <div style="font-size:2rem;">{% if a.passed %}🏆{% else %}📝{% endif %}</div>
+      <div class="item-info">
+        <div class="item-title">{{ a.exam.title }}</div>
+        <div class="item-meta">{{ a.completed_at.strftime('%b %d, %Y') }} · {{ a.score }}/{{ a.total }} points</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="fw-700" style="font-size:1.2rem;color:{% if a.passed %}var(--accent){% else %}var(--danger){% endif %};">{{ a.percentage }}%</div>
+        <span class="badge {% if a.passed %}badge-success{% else %}badge-danger{% endif %}">
+          {{ '✅ Passed' if a.passed else '❌ Failed' }}
+        </span>
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card"><div class="empty-state">
+  <span class="empty-icon">📊</span>
+  <div class="empty-title">No results yet</div>
+  <div class="empty-desc">Complete an exam to see your results here.</div>
+  <a href="{{ url_for('student_exams') }}" class="btn btn-primary">📝 Go to Exams</a>
+</div></div>
+{% endif %}
+{% endblock %}

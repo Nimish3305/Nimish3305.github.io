@@ -1,0 +1,61 @@
+{% extends 'student/base_student.html' %}
+{% block title %}Dashboard — Student Portal{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+  <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <h2 class="welcome-h2">Welcome back, {{ current_user.full_name.split()[0] if current_user.full_name else current_user.username }}!</h2>
+      <div class="welcome-sub">{{ current_user.school_name or 'Motion Robotics' }} — {{ cls.name if cls else 'No class' }}</div>
+      {% if level %}
+      <div class="welcome-tag">🤖 {{ level }}</div>
+      {% endif %}
+    </div>
+    <button onclick="location.reload()" style="background:rgba(255,255,255,.2); border:none; padding:.5rem; border-radius:var(--radius); color:#fff; cursor:pointer; font-size:1rem;">🔄</button>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(79,70,229,.12);">🔬</div>
+    <div><div class="stat-number" data-count="{{ total_exp }}">{{ total_exp }}</div><div class="stat-label">Total Experiments</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(16,185,129,.12);">🔓</div>
+    <div><div class="stat-number" data-count="{{ unlocked }}">{{ unlocked }}</div><div class="stat-label">Unlocked</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(16,185,129,.12);">✅</div>
+    <div><div class="stat-number" data-count="{{ approved }}">{{ approved }}</div><div class="stat-label">Approved</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(245,158,11,.12);">⏳</div>
+    <div><div class="stat-number" data-count="{{ pending }}">{{ pending }}</div><div class="stat-label">Pending</div></div></div>
+</div>
+
+<!-- Level Progress -->
+<div class="card mb-3">
+  <div class="flex-between mb-2">
+    <div class="fw-700" style="font-size:1rem;">📈 Level Progress</div>
+    <span class="text-sm text-muted">{{ progress_pct }}% Complete</span>
+  </div>
+  <div class="progress-wrap" style="height:12px; margin-bottom:.75rem;">
+    <div class="progress-fill" data-pct="{{ progress_pct }}" style="width:0%;"></div>
+  </div>
+  <div class="text-sm text-muted">{{ approved }} of {{ total_exp }} experiments approved by teacher</div>
+</div>
+
+<!-- Nav Cards -->
+<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem;">
+  {% for href, icon, bg, label, sub in [
+    (url_for('student_experiments'), '🔬', '#EEF2FF', 'Experiments & Video Tutorials', 'View unlocked experiments'),
+    (url_for('student_books'),       '📘', '#EFF6FF', 'Digital Books',                  'Study materials'),
+    (url_for('student_exams'),       '📝', '#FFF1F2', 'MCQ Examination',                 'Take your level exam'),
+    (url_for('student_results'),     '📊', '#F0FDF4', 'My Results',                      'View exam scores'),
+    (url_for('student_certificate'), '🏆', '#FFFBEB', 'Certificate',                     'Earn your certificate'),
+  ] %}
+  <a href="{{ href }}" style="text-decoration:none;">
+    <div class="card" style="text-align:center; transition:all .2s; cursor:pointer;">
+      <div style="font-size:2.5rem; margin-bottom:.5rem;">{{ icon }}</div>
+      <div class="fw-700 text-sm">{{ label }}</div>
+      <div class="text-xs text-muted mt-1">{{ sub }}</div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}

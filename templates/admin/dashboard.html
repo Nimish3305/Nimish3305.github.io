@@ -1,0 +1,89 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Dashboard — Admin{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(79,70,229,.12);">📚</div>
+    <div><div class="stat-number" data-count="{{ total_classes }}">{{ total_classes }}</div><div class="stat-label">Total Classes</div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(14,165,233,.12);">🎓</div>
+    <div><div class="stat-number" data-count="{{ total_teachers }}">{{ total_teachers }}</div><div class="stat-label">Teachers</div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(16,185,129,.12);">👤</div>
+    <div><div class="stat-number" data-count="{{ total_students }}">{{ total_students }}</div><div class="stat-label">Students</div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(245,158,11,.12);">🏫</div>
+    <div><div class="stat-number" data-count="{{ total_schools }}">{{ total_schools }}</div><div class="stat-label">Schools</div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(239,68,68,.12);">📝</div>
+    <div><div class="stat-number" data-count="{{ total_exams }}">{{ total_exams }}</div><div class="stat-label">Exams</div></div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="fw-700 mb-3" style="font-size:1rem;">⚡ Quick Actions</div>
+    <div style="display:flex;flex-direction:column;gap:.6rem;">
+      <a href="{{ url_for('admin_classes') }}" class="quick-action">
+        <div class="qa-icon">📚</div><div><div class="qa-title">Manage Classes</div><div class="qa-sub">Add classes &amp; assign robotics levels</div></div>
+      </a>
+      <a href="{{ url_for('admin_teachers') }}" class="quick-action">
+        <div class="qa-icon">🎓</div><div><div class="qa-title">Manage Teachers</div><div class="qa-sub">Add &amp; assign teachers to classes</div></div>
+      </a>
+      <a href="{{ url_for('admin_students') }}" class="quick-action">
+        <div class="qa-icon">👤</div><div><div class="qa-title">Manage Students</div><div class="qa-sub">Enroll students with roll numbers</div></div>
+      </a>
+      <a href="{{ url_for('admin_exams') }}" class="quick-action">
+        <div class="qa-icon">📝</div><div><div class="qa-title">Create Exams</div><div class="qa-sub">Build MCQ exams per robotics level</div></div>
+      </a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="flex-between mb-2">
+      <div class="fw-700" style="font-size:1rem;">👥 Recent Students</div>
+      <a href="{{ url_for('admin_students') }}" class="btn btn-ghost btn-sm">View All</a>
+    </div>
+    {% if recent_students %}
+    <div style="display:flex;flex-direction:column;gap:.6rem;">
+      {% for s in recent_students %}
+      <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem;background:var(--bg3);border-radius:var(--radius);">
+        <div class="avatar" style="background:{{ s.avatar_color }};width:36px;height:36px;font-size:.85rem;">
+          {{ (s.full_name or s.username)[0].upper() }}
+        </div>
+        <div style="flex:1;">
+          <div class="fw-700 text-sm">{{ s.full_name or s.username }}</div>
+          <div class="text-xs text-muted">{{ s.roll_number or s.email }}</div>
+        </div>
+        <span class="badge badge-primary">{{ s.school_name or '—' }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:2rem;">
+      <span class="empty-icon">👤</span><div class="empty-desc">No students yet</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="fw-700 mb-3" style="font-size:1rem;">🤖 Robotics Curriculum — 6 Levels</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;">
+    {% set level_icons = ['⚙️','⚡','🔩','💾','📡','📶'] %}
+    {% for lvl in ROBOTICS_LEVELS %}
+    <div style="text-align:center;padding:1.25rem .75rem;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--border);">
+      <div style="font-size:2rem;margin-bottom:.4rem;">{{ level_icons[loop.index0] }}</div>
+      <div style="font-size:.72rem;font-weight:700;color:var(--primary);text-transform:uppercase;">Level {{ loop.index }}</div>
+      <div style="font-size:.8rem;font-weight:600;margin-top:.2rem;">{{ lvl.split(': ')[1] }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

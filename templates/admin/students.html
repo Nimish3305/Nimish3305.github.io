@@ -1,0 +1,133 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Students — Admin{% endblock %}
+{% block page_title %}Students{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title-wrap">
+    <div class="page-icon" style="background:rgba(16,185,129,.12); color:var(--accent);">👤</div>
+    <div><div class="page-h1">Students</div><div class="page-sub">Manage student accounts and enrollments</div></div>
+  </div>
+  <button class="btn btn-primary" onclick="openModal('addStudentModal')">+ Add Student</button>
+</div>
+
+<div class="stats-row">
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(16,185,129,.12);">👤</div>
+    <div><div class="stat-number" data-count="{{ total_students }}">{{ total_students }}</div><div class="stat-label">Total Students</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(245,158,11,.12);">🏫</div>
+    <div><div class="stat-number" data-count="{{ schools }}">{{ schools }}</div><div class="stat-label">Schools</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(79,70,229,.12);">📚</div>
+    <div><div class="stat-number" data-count="{{ programs }}">{{ programs }}</div><div class="stat-label">Programs</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(14,165,233,.12);">🏷️</div>
+    <div><div class="stat-number" data-count="{{ classes_count }}">{{ classes_count }}</div><div class="stat-label">Classes</div></div></div>
+</div>
+
+<div class="search-bar">
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" class="form-control" placeholder="Search students by name, email, or roll number…"
+      oninput="filterStudents(this.value)">
+  </div>
+</div>
+
+{% if students %}
+<div style="display:flex; flex-direction:column; gap:.6rem;">
+  {% for s in students %}
+  <div class="item-row s-row" data-search="{{ (s.full_name + ' ' + s.email + ' ' + (s.roll_number or ''))|lower }}">
+    <div class="avatar" style="background:{{ s.avatar_color }};">
+      {{ (s.full_name or s.username)[0].upper() }}
+    </div>
+    <div class="item-info">
+      <div class="item-title">{{ s.full_name or s.username }}</div>
+      <div class="item-meta">
+        {% if s.roll_number %}<span class="badge badge-blue" style="margin-right:.35rem;">{{ s.roll_number }}</span>{% endif %}
+        📧 {{ s.email }} · 🏫 {{ s.school_name or '—' }}
+      </div>
+      {% for sc in s.student_classes %}
+      <div class="item-meta mt-1" style="display:flex; gap:.35rem; flex-wrap:wrap;">
+        <span class="badge badge-primary">{{ sc.cls.name }}</span>
+        {% if sc.cls.robotics_level %}
+        <span class="badge badge-purple">{{ sc.cls.robotics_level }}</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="item-actions">
+      <form method="POST" action="{{ url_for('admin_delete_student', sid=s.id) }}" data-confirm="Delete student {{ s.full_name }}?">
+        <button class="btn btn-icon btn-ghost" type="submit">🗑️</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <span class="empty-icon">👤</span>
+    <div class="empty-title">No students yet</div>
+    <div class="empty-desc">Add students and assign them to classes. Their robotics program will be auto-assigned based on the class level.</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Add Student Modal -->
+<div class="modal-overlay hidden" id="addStudentModal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <div class="modal-title">+ Add New Student</div>
+      <button class="modal-close" onclick="closeModal('addStudentModal')">×</button>
+    </div>
+    <form method="POST" action="{{ url_for('admin_add_student') }}">
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Full Name *</label>
+          <input type="text" name="full_name" class="form-control" placeholder="Student name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email *</label>
+          <input type="email" name="email" class="form-control" placeholder="student@school.edu" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          <input type="password" name="password" class="form-control" placeholder="Min 6 characters" required minlength="6">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Roll Number *</label>
+          <input type="text" name="roll_number" class="form-control" placeholder="e.g. STU001" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">School *</label>
+          <input type="text" name="school" class="form-control" placeholder="e.g. CIS" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Class *</label>
+          <select name="class_id" class="form-control" required>
+            <option value="">Select a class</option>
+            {% for c in classes %}
+            <option value="{{ c.id }}">{{ c.name }} ({{ c.school_name }})</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="card" style="background:var(--bg3); border-left:4px solid var(--secondary); padding:.85rem 1rem; margin-bottom:1rem;">
+        <div style="font-size:.8rem; font-weight:700; color:var(--secondary); margin-bottom:.2rem;">ℹ️ Program Auto-Assignment</div>
+        <div style="font-size:.8rem; color:var(--text2);">The robotics program will be automatically assigned based on the class's robotics level. Make sure the class has a level assigned first.</div>
+      </div>
+      <div style="display:flex; gap:.75rem;">
+        <button class="btn btn-primary" type="submit">+ Add Student</button>
+        <button class="btn btn-ghost" type="button" onclick="closeModal('addStudentModal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterStudents(q) {
+  document.querySelectorAll('.s-row').forEach(r => {
+    r.style.display = r.dataset.search.includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}
