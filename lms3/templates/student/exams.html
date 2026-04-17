@@ -1,0 +1,38 @@
+{% extends 'student/base_student.html' %}
+{% block title %}Examination — Student Portal{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-title-wrap">
+    <div class="page-icon" style="background:rgba(239,68,68,.12); color:var(--danger);">📝</div>
+    <div><div class="page-h1">MCQ Examination</div><div class="page-sub">Level assessments</div></div>
+  </div>
+</div>
+{% if exams %}
+<div style="display:flex;flex-direction:column;gap:.75rem;">
+  {% for e in exams %}
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+      <div style="display:flex;align-items:center;gap:.85rem;">
+        <div class="page-icon" style="background:rgba(239,68,68,.12);color:var(--danger);">📝</div>
+        <div>
+          <div class="fw-700">{{ e.title }}</div>
+          <div class="text-xs text-muted">⏱️ {{ e.time_limit }} min · 🎯 Pass at {{ e.passing_score }}% · ❓ {{ e.questions|length }} questions</div>
+        </div>
+      </div>
+      {% if e.id in attempted_ids %}
+        <span class="badge badge-success">✅ Completed</span>
+      {% else %}
+        <a href="{{ url_for('student_take_exam', eid=e.id) }}" class="btn btn-primary">▶️ Start Exam</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card"><div class="empty-state">
+  <span class="empty-icon">📝</span>
+  <div class="empty-title">No exams available</div>
+  <div class="empty-desc">Exams for your level will appear here once published by admin.</div>
+</div></div>
+{% endif %}
+{% endblock %}

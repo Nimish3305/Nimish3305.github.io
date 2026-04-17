@@ -1,0 +1,109 @@
+{% extends 'teacher/base_teacher.html' %}
+{% block title %}{{ cls.name }} Experiments — Teacher Portal{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <a href="{{ url_for('teacher_dashboard') }}" class="btn btn-ghost btn-sm">← Back to Classes</a>
+</div>
+
+<div class="card mb-3">
+  <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+    <div style="display:flex; align-items:center; gap:.85rem;">
+      <div class="page-icon" style="background:rgba(79,70,229,.12); color:var(--primary);">📚</div>
+      <div>
+        <div style="font-size:1.3rem; font-weight:800;">{{ cls.name }}</div>
+        <div class="text-sm text-muted">Manage experiments for this class</div>
+      </div>
+    </div>
+    {% if cls.robotics_level %}
+    <span class="level-pill">🤖 {{ cls.robotics_level }}</span>
+    {% endif %}
+  </div>
+  <div style="display:flex; gap:2rem; margin-top:1rem; flex-wrap:wrap;">
+    <div class="text-sm">📋 <strong>{{ exp_data|length }}</strong> Total Experiments</div>
+    <div class="text-sm">🔓 <strong>{{ exp_data|selectattr('is_unlocked')|list|length }}</strong> Unlocked</div>
+    <div class="text-sm">🔒 <strong>{{ exp_data|rejectattr('is_unlocked')|list|length }}</strong> Locked</div>
+  </div>
+</div>
+
+{% if exp_data %}
+<div style="display:flex; flex-direction:column; gap:.65rem;">
+  {% for ed in exp_data %}
+  <div class="exp-item" style="{% if ed.is_unlocked %}border-color:var(--accent);{% endif %}">
+    <div class="exp-num" style="background:{% if ed.is_unlocked %}var(--accent){% else %}var(--text3){% endif %};">
+      {{ ed.exp.exp_number }}
+    </div>
+    <div class="exp-info">
+      <div style="display:flex; align-items:center; gap:.6rem; flex-wrap:wrap;">
+        <div class="exp-title">EXP {{ ed.exp.exp_number }}: {{ ed.exp.title }}</div>
+        {% if ed.is_unlocked %}
+          <span class="badge badge-success">🔓 Unlocked</span>
+        {% else %}
+          <span class="badge badge-danger">🔒 Locked</span>
+        {% endif %}
+      </div>
+      <div class="exp-desc">{{ ed.exp.description or '' }}</div>
+      {% if ed.is_unlocked and ed.unlock %}
+      <div class="exp-meta">
+        📅 Unlocked: {{ ed.unlock.unlocked_at.strftime('%m/%d/%Y, %I:%M %p') }}
+        {% if ed.unlock.deadline %}· Deadline: {{ ed.unlock.deadline.strftime('%b %d, %Y') }}{% endif %}
+      </div>
+      {% endif %}
+    </div>
+    <div style="display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; flex-shrink:0;">
+      {% if ed.exp.video_url %}
+      <a href="{{ ed.exp.video_url }}" target="_blank" class="btn btn-ghost btn-sm">👁️ Preview</a>
+      {% endif %}
+      {% if ed.is_unlocked %}
+      <form method="POST" action="{{ url_for('teacher_lock_experiment', cid=cls.id, eid=ed.exp.id) }}">
+        <button class="btn btn-danger btn-sm" type="submit">🔒 Lock</button>
+      </form>
+      {% else %}
+      <button class="btn btn-success btn-sm" onclick="openUnlock({{ ed.exp.id }}, '{{ ed.exp.title|e }}')">🔓 Unlock</button>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <span class="empty-icon">🔬</span>
+    <div class="empty-title">No experiments available</div>
+    <div class="empty-desc">{% if cls.robotics_level %}No experiments found for {{ cls.robotics_level }}.{% else %}This class has no robotics level assigned yet. Ask admin to set one.{% endif %}</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Unlock Modal -->
+<div class="modal-overlay hidden" id="unlockModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🔓 Unlock Experiment</div>
+      <button class="modal-close" onclick="closeModal('unlockModal')">×</button>
+    </div>
+    <div id="unlockExpName" class="text-sm text-muted mb-3"></div>
+    <form method="POST" id="unlockForm">
+      <div class="form-group">
+        <label class="form-label">Deadline (Optional)</label>
+        <input type="datetime-local" name="deadline" class="form-control">
+        <div class="form-hint">Leave blank for no deadline</div>
+      </div>
+      <div style="display:flex; gap:.75rem; margin-top:.5rem;">
+        <button class="btn btn-success" type="submit">🔓 Unlock Now</button>
+        <button class="btn btn-ghost" type="button" onclick="closeModal('unlockModal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function openUnlock(expId, expTitle) {
+  document.getElementById('unlockExpName').textContent = expTitle;
+  document.getElementById('unlockForm').action = `/teacher/class/{{ cls.id }}/experiment/${expId}/unlock`;
+  openModal('unlockModal');
+}
+</script>
+{% endblock %}

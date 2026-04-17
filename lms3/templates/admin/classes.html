@@ -1,0 +1,138 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Classes — Admin{% endblock %}
+{% block page_title %}Classes{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title-wrap">
+    <div class="page-icon" style="background:rgba(79,70,229,.12); color:var(--primary);">📚</div>
+    <div>
+      <div class="page-h1">Classes</div>
+      <div class="page-sub">Manage classes and assign robotics levels</div>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="openModal('addClassModal')">+ Add Class</button>
+</div>
+
+<!-- Stats -->
+<div class="stats-row">
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(79,70,229,.12);">📚</div>
+    <div><div class="stat-number" data-count="{{ total_classes }}">{{ total_classes }}</div><div class="stat-label">Total Classes</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(16,185,129,.12);">🎓</div>
+    <div><div class="stat-number" data-count="{{ with_level }}">{{ with_level }}</div><div class="stat-label">With Level Assigned</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(245,158,11,.12);">🏫</div>
+    <div><div class="stat-number" data-count="{{ schools_count }}">{{ schools_count }}</div><div class="stat-label">Schools with Classes</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(14,165,233,.12);">👤</div>
+    <div><div class="stat-number" data-count="{{ total_students }}">{{ total_students }}</div><div class="stat-label">Total Students</div></div></div>
+</div>
+
+<!-- Search -->
+<div class="search-bar">
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" class="form-control" id="classSearch" placeholder="Search classes by name or school…" oninput="filterRows(this.value,'classTable')">
+  </div>
+</div>
+
+{% if classes %}
+<div style="display:flex; flex-direction:column; gap:.6rem;" id="classTable">
+  {% for c in classes %}
+  <div class="item-row class-row" data-name="{{ (c.name + ' ' + (c.school_name or ''))|lower }}">
+    <div class="item-icon" style="background:rgba(79,70,229,.12); color:var(--primary);">📚</div>
+    <div class="item-info">
+      <div class="item-title">{{ c.name }}</div>
+      <div class="item-meta">
+        🏫 {{ c.school_name or 'No school' }} ·
+        👤 {{ c.student_classes|length }} students
+      </div>
+    </div>
+    {% if c.robotics_level %}
+      <span class="level-pill">🤖 {{ c.robotics_level }}</span>
+    {% else %}
+      <span class="badge badge-gray">No level</span>
+    {% endif %}
+    <div class="item-actions">
+      <!-- Set level -->
+      <form method="POST" action="{{ url_for('admin_set_class_level', cid=c.id) }}" style="display:flex; gap:.4rem; align-items:center;">
+        <select name="level" class="form-control" style="font-size:.78rem; padding:.3rem .6rem; width:auto;">
+          <option value="">No level</option>
+          {% for lvl in ROBOTICS_LEVELS %}
+          <option value="{{ lvl }}" {% if c.robotics_level == lvl %}selected{% endif %}>{{ lvl }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn btn-outline btn-sm" type="submit">Set</button>
+      </form>
+      <form method="POST" action="{{ url_for('admin_delete_class', cid=c.id) }}" data-confirm="Delete class {{ c.name }}?">
+        <button class="btn btn-icon btn-ghost" type="submit" title="Delete">🗑️</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <span class="empty-icon">📚</span>
+    <div class="empty-title">No classes created yet</div>
+    <div class="empty-desc">Click "+ Add Class" to create your first class and assign a robotics level.</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- How Level Assignment Works -->
+<div class="card mt-3" style="border-left:4px solid var(--primary);">
+  <div class="fw-700 mb-2">ℹ️ How Level Assignment Works</div>
+  <ul style="color:var(--text2); font-size:.875rem; line-height:2; padding-left:1.25rem;">
+    <li>Assign a <strong>robotics level</strong> to each class to define which curriculum they will follow</li>
+    <li>Teachers can then <strong>unlock experiments</strong> within that level for their students</li>
+    <li>Students will only see experiments that have been unlocked by their teacher</li>
+    <li>You can change the level assignment at any time during the academic year</li>
+  </ul>
+</div>
+
+<!-- Add Class Modal -->
+<div class="modal-overlay hidden" id="addClassModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">+ Add New Class</div>
+      <button class="modal-close" onclick="closeModal('addClassModal')">×</button>
+    </div>
+    <form method="POST" action="{{ url_for('admin_add_class') }}">
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Class Name *</label>
+          <input type="text" name="name" class="form-control" placeholder="e.g. Grade 5" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">School *</label>
+          <input type="text" name="school" class="form-control" placeholder="e.g. CIS" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Robotics Level (Optional)</label>
+        <select name="level" class="form-control">
+          <option value="">No level assigned</option>
+          {% for lvl in ROBOTICS_LEVELS %}
+          <option value="{{ lvl }}">{{ lvl }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="display:flex; gap:.75rem; margin-top:.5rem;">
+        <button class="btn btn-primary" type="submit">+ Add Class</button>
+        <button class="btn btn-ghost" type="button" onclick="closeModal('addClassModal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterRows(query, tableId) {
+  const q = query.toLowerCase();
+  document.querySelectorAll('.class-row').forEach(row => {
+    row.style.display = row.dataset.name.includes(q) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

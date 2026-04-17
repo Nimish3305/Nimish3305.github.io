@@ -1,0 +1,116 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Exams — Admin{% endblock %}
+{% block page_title %}Exams{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title-wrap">
+    <div class="page-icon" style="background:rgba(239,68,68,.12); color:var(--danger);">📝</div>
+    <div><div class="page-h1">Exams</div><div class="page-sub">Manage assessments for each robotics level</div></div>
+  </div>
+  <button class="btn btn-primary" onclick="openModal('addExamModal')">+ Create Exam</button>
+</div>
+
+<div class="stats-row">
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(239,68,68,.12);">📝</div>
+    <div><div class="stat-number" data-count="{{ total_exams }}">{{ total_exams }}</div><div class="stat-label">Total Exams</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(245,158,11,.12);">📅</div>
+    <div><div class="stat-number" data-count="{{ upcoming }}">{{ upcoming }}</div><div class="stat-label">Upcoming</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(16,185,129,.12);">✅</div>
+    <div><div class="stat-number" data-count="{{ completed }}">{{ completed }}</div><div class="stat-label">Completed</div></div></div>
+</div>
+
+<div class="search-bar">
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" class="form-control" placeholder="Search exams by title…" oninput="filterExams(this.value)">
+  </div>
+</div>
+
+{% if exams %}
+<div style="display:flex; flex-direction:column; gap:.6rem;">
+  {% for e in exams %}
+  <div class="item-row e-row" data-search="{{ e.title|lower }}">
+    <div class="item-icon" style="background:rgba(239,68,68,.12); color:var(--danger);">📝</div>
+    <div class="item-info">
+      <div class="item-title">{{ e.title }}</div>
+      <div class="item-meta">
+        📅 {% if e.scheduled_at %}{{ e.scheduled_at.strftime('%b %d, %Y') }}{% else %}Not scheduled{% endif %}
+        · ❓ {{ e.questions|length }} questions
+        · ⏱️ {{ e.time_limit }} min
+      </div>
+    </div>
+    <span class="badge {% if e.status=='published' %}badge-success{% else %}badge-gray{% endif %}">
+      {{ '✅ Published' if e.status=='published' else '📝 Draft' }}
+    </span>
+    <div class="item-actions">
+      <a href="{{ url_for('admin_exam_detail', eid=e.id) }}" class="btn btn-outline btn-sm">✏️ Edit</a>
+      <form method="POST" action="{{ url_for('admin_publish_exam', eid=e.id) }}">
+        <button class="btn {% if e.status=='published' %}btn-warning{% else %}btn-success{% endif %} btn-sm" type="submit">
+          {{ '🔴 Unpublish' if e.status=='published' else '🟢 Publish' }}
+        </button>
+      </form>
+      <form method="POST" action="{{ url_for('admin_delete_exam', eid=e.id) }}" data-confirm="Delete exam '{{ e.title }}'?">
+        <button class="btn btn-icon btn-ghost" type="submit">🗑️</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <span class="empty-icon">📝</span>
+    <div class="empty-title">No exams created yet</div>
+    <div class="empty-desc">Create final assessments for each robotics level.</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Add Exam Modal -->
+<div class="modal-overlay hidden" id="addExamModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">+ Create New Exam</div>
+      <button class="modal-close" onclick="closeModal('addExamModal')">×</button>
+    </div>
+    <form method="POST" action="{{ url_for('admin_add_exam') }}">
+      <div class="form-group">
+        <label class="form-label">Exam Title *</label>
+        <input type="text" name="title" class="form-control" required placeholder="e.g. Electronics Final Assessment">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Robotics Level</label>
+        <select name="level" class="form-control">
+          <option value="">General</option>
+          {% for lvl in ROBOTICS_LEVELS %}<option>{{ lvl }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Time Limit (minutes)</label>
+          <input type="number" name="time_limit" class="form-control" value="30" min="5" max="180">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Passing Score (%)</label>
+          <input type="number" name="passing_score" class="form-control" value="60" min="1" max="100">
+        </div>
+      </div>
+      <div style="display:flex; gap:.75rem; margin-top:.5rem;">
+        <button class="btn btn-primary" type="submit">+ Create Exam</button>
+        <button class="btn btn-ghost" type="button" onclick="closeModal('addExamModal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterExams(q) {
+  document.querySelectorAll('.e-row').forEach(r => {
+    r.style.display = r.dataset.search.includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

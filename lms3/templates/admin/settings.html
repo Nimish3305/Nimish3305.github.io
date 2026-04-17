@@ -1,0 +1,88 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Settings — Admin{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title-wrap">
+    <div class="page-icon" style="background:rgba(148,163,184,.12); color:var(--text2);">⚙️</div>
+    <div><div class="page-h1">Settings</div><div class="page-sub">Configure system settings and preferences</div></div>
+  </div>
+  <button class="btn btn-primary">💾 Save Changes</button>
+</div>
+
+<div class="grid-2" style="align-items:start;">
+  <!-- Left nav -->
+  <div style="display:flex; flex-direction:column; gap:.4rem;">
+    {% for label, icon in [('General','🌐'),('Security','🔒'),('Notifications','🔔'),('Appearance','🎨'),('Email','📧'),('Database','🗄️')] %}
+    <div class="nav-link {% if loop.first %}active{% endif %}" style="cursor:pointer;" onclick="showTab('{{ label }}')">
+      <span class="icon">{{ icon }}</span> {{ label }}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Settings panel -->
+  <div class="card">
+    <div class="fw-700 mb-3" style="font-size:1.05rem;">🌐 General Settings</div>
+    <hr class="divider">
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">Site Name</label>
+        <input type="text" class="form-control" value="Motion Robotics LMS">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contact Email</label>
+        <input type="email" class="form-control" value="support@motionrobotics.in">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Timezone</label>
+        <select class="form-control">
+          <option>Asia/Kolkata (IST)</option>
+          <option>UTC</option>
+          <option>America/New_York</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Language</label>
+        <select class="form-control">
+          <option>English</option>
+          <option>Hindi</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:1rem; background:var(--bg3); border-radius:var(--radius); border:1px solid var(--border);">
+      <div>
+        <div class="fw-700 text-sm">Maintenance Mode</div>
+        <div class="text-xs text-muted">Disable access to the site for non-admins</div>
+      </div>
+      <label style="position:relative; display:inline-block; width:48px; height:26px; cursor:pointer;">
+        <input type="checkbox" style="opacity:0; width:0; height:0;" id="maintenanceToggle">
+        <span id="toggleBg" style="position:absolute; inset:0; background:var(--border); border-radius:13px; transition:.3s;"></span>
+        <span id="toggleDot" style="position:absolute; left:3px; top:3px; width:20px; height:20px; background:#fff; border-radius:50%; transition:.3s;"></span>
+      </label>
+    </div>
+    <div class="fw-700 mt-3 mb-2" style="font-size:1rem;">🎨 Appearance</div>
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:1rem; background:var(--bg3); border-radius:var(--radius); border:1px solid var(--border);">
+      <div>
+        <div class="fw-700 text-sm">Dark Mode</div>
+        <div class="text-xs text-muted">Toggle between light and dark themes</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="toggleTheme()">
+        <span class="theme-icon">🌙</span> <span class="theme-label">Dark Mode</span>
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const mt = document.getElementById('maintenanceToggle');
+const bg = document.getElementById('toggleBg');
+const dot = document.getElementById('toggleDot');
+if (mt) mt.addEventListener('change', () => {
+  bg.style.background = mt.checked ? 'var(--primary)' : 'var(--border)';
+  dot.style.transform = mt.checked ? 'translateX(22px)' : 'none';
+});
+</script>
+{% endblock %}

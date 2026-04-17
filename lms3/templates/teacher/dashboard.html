@@ -1,0 +1,123 @@
+{% extends 'teacher/base_teacher.html' %}
+{% block title %}Dashboard — Teacher Portal{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(79,70,229,.12);">📚</div>
+      <div><div class="stat-number" data-count="{{ my_classes|length }}">{{ my_classes|length }}</div><div class="stat-label">Classes</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(16,185,129,.12);">👤</div>
+      <div><div class="stat-number" data-count="{{ total_students }}">{{ total_students }}</div><div class="stat-label">Students</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(245,158,11,.12);">⏳</div>
+      <div><div class="stat-number" data-count="{{ pending|length }}">{{ pending|length }}</div><div class="stat-label">Pending</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:rgba(139,92,246,.12);">🔬</div>
+      <div><div class="stat-number" data-count="{{ total_exps }}">{{ total_exps }}</div><div class="stat-label">Experiments</div></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- My Classes -->
+    <div>
+      <div class="fw-700 mb-2" style="font-size:1rem;">My Classes</div>
+      <div class="text-xs text-muted mb-2">Click on a class to manage experiments</div>
+      {% if my_classes %}
+        {% for cd in my_classes %}
+        <a href="{{ url_for('teacher_class_experiments', cid=cd.cls.id) }}"
+           style="display:block; text-decoration:none; color:inherit; margin-bottom:.75rem;">
+          <div class="card" style="cursor:pointer; transition:all .2s;">
+            <div style="display:flex; align-items:center; gap:.85rem;">
+              <div style="width:44px; height:44px; border-radius:var(--radius); background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:1rem; flex-shrink:0;">
+                L{{ loop.index }}
+              </div>
+              <div style="flex:1;">
+                <div class="fw-700">{{ cd.cls.name }}</div>
+                <div class="text-xs text-muted">{{ cd.cls.robotics_level or 'No level assigned' }}</div>
+              </div>
+              <div style="text-align:right; font-size:.82rem;">
+                <div><strong>{{ cd.students }}</strong> students</div>
+                <div class="text-muted">{{ cd.total_exp }} experiments</div>
+              </div>
+              {% if cd.pend_count > 0 %}
+              <span class="badge badge-warning">{{ cd.pend_count }} pending</span>
+              {% endif %}
+              <span style="color:var(--text3);">›</span>
+            </div>
+            <div class="mt-2">
+              <div class="flex-between text-xs text-muted mb-1">
+                <span>Overall Progress</span>
+                <span>{{ cd.completions }} / {{ cd.total_exp }} completions</span>
+              </div>
+              <div class="progress-wrap">
+                <div class="progress-fill" data-pct="{{ ((cd.completions / cd.total_exp * 100) if cd.total_exp else 0)|round(0)|int }}" style="width:0%;"></div>
+              </div>
+            </div>
+          </div>
+        </a>
+        {% endfor %}
+      {% else %}
+      <div class="card"><div class="empty-state" style="padding:2rem;">
+        <span class="empty-icon">📚</span>
+        <div class="empty-title">No classes assigned</div>
+        <div class="empty-desc">Ask your admin to assign you to classes.</div>
+      </div></div>
+      {% endif %}
+    </div>
+
+    <!-- Right column: Quick Actions + Pending -->
+    <div>
+      <div class="card mb-2">
+        <div class="fw-700 mb-2" style="font-size:1rem;">⚡ Quick Actions</div>
+        {% for cd in my_classes %}
+        <a href="{{ url_for('teacher_class_experiments', cid=cd.cls.id) }}" class="quick-action mb-1" style="display:flex; margin-bottom:.5rem;">
+          <div class="qa-icon">🔓</div>
+          <div><div class="qa-title">Unlock Experiments</div><div class="qa-sub">{{ cd.cls.name }} — {{ cd.cls.robotics_level or 'No level' }}</div></div>
+        </a>
+        <a href="{{ url_for('teacher_reports', cid=cd.cls.id) }}" class="quick-action" style="display:flex;">
+          <div class="qa-icon">📊</div>
+          <div><div class="qa-title">View Reports</div><div class="qa-sub">Student progress reports</div></div>
+        </a>
+        {% endfor %}
+      </div>
+
+      <!-- Pending Approvals -->
+      {% if pending %}
+      <div class="card">
+        <div class="flex-between mb-2">
+          <div class="fw-700" style="font-size:1rem;">⏳ Pending Approvals</div>
+          <span class="badge badge-warning">{{ pending|length }}</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:.6rem;">
+          {% for p in pending[:5] %}
+          <div style="display:flex; align-items:center; gap:.75rem; padding:.75rem; background:var(--bg3); border-radius:var(--radius);">
+            <div class="avatar" style="background:{{ p.student.avatar_color }}; width:34px; height:34px; font-size:.82rem;">
+              {{ (p.student.full_name or p.student.username)[0].upper() }}
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div class="fw-700 text-sm">{{ p.student.full_name or p.student.username }}</div>
+              <div class="text-xs text-muted">{{ p.cls.name }} · EXP {{ p.experiment.exp_number }}: {{ p.experiment.title[:30] }}…</div>
+            </div>
+            <div style="display:flex; gap:.35rem;">
+              <form method="POST" action="{{ url_for('teacher_approve_progress', pid=p.id) }}">
+                <button class="btn btn-icon btn-success btn-sm" title="Approve" type="submit">✅</button>
+              </form>
+              <form method="POST" action="{{ url_for('teacher_reject_progress', pid=p.id) }}">
+                <button class="btn btn-icon btn-danger btn-sm" title="Reject" type="submit">❌</button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends 'admin/base_admin.html' %}
+{% block title %}Teachers — Admin{% endblock %}
+{% block page_title %}Teachers{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-title-wrap">
+    <div class="page-icon" style="background:rgba(14,165,233,.12); color:var(--secondary);">🎓</div>
+    <div><div class="page-h1">Teachers</div><div class="page-sub">Manage instructor accounts and assignments</div></div>
+  </div>
+  <button class="btn btn-primary" onclick="openModal('addTeacherModal')">+ Add Teacher</button>
+</div>
+
+<div class="stats-row">
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(14,165,233,.12);">🎓</div>
+    <div><div class="stat-number" data-count="{{ total_teachers }}">{{ total_teachers }}</div><div class="stat-label">Total Teachers</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(245,158,11,.12);">🏫</div>
+    <div><div class="stat-number" data-count="{{ schools_covered }}">{{ schools_covered }}</div><div class="stat-label">Schools Covered</div></div></div>
+  <div class="stat-card"><div class="stat-icon" style="background:rgba(16,185,129,.12);">📚</div>
+    <div><div class="stat-number" data-count="{{ classes_assigned }}">{{ classes_assigned }}</div><div class="stat-label">Classes Assigned</div></div></div>
+</div>
+
+<div class="search-bar">
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" class="form-control" placeholder="Search teachers by name or email…"
+      oninput="filterTeachers(this.value)">
+  </div>
+</div>
+
+{% if teachers %}
+<div style="display:flex; flex-direction:column; gap:.6rem;" id="teacherList">
+  {% for t in teachers %}
+  <div class="item-row t-row" data-search="{{ (t.full_name + ' ' + t.email)|lower }}">
+    <div class="avatar" style="background:{{ t.avatar_color }};">
+      {{ (t.full_name or t.username)[0].upper() }}
+    </div>
+    <div class="item-info">
+      <div class="item-title">{{ t.full_name or t.username }}</div>
+      <div class="item-meta">
+        📧 {{ t.email }}
+        {% if t.phone %} · 📞 {{ t.phone }}{% endif %}
+        {% if t.school_name %} · 🏫 {{ t.school_name }}{% endif %}
+      </div>
+      {% if t.teacher_classes %}
+      <div class="item-meta mt-1">
+        Classes:
+        {% for tc in t.teacher_classes %}
+          <span class="badge badge-primary" style="margin-right:.25rem;">{{ tc.cls.name }}</span>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="item-meta mt-1"><span class="badge badge-gray">No classes assigned</span></div>
+      {% endif %}
+    </div>
+    <div class="item-actions">
+      <form method="POST" action="{{ url_for('admin_delete_teacher', tid=t.id) }}" data-confirm="Delete teacher {{ t.full_name }}? This cannot be undone.">
+        <button class="btn btn-icon btn-ghost" type="submit" title="Delete">🗑️</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <span class="empty-icon">🎓</span>
+    <div class="empty-title">No teachers yet</div>
+    <div class="empty-desc">Add your first teacher and assign them to classes.</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Add Teacher Modal -->
+<div class="modal-overlay hidden" id="addTeacherModal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <div class="modal-title">+ Add New Teacher</div>
+      <button class="modal-close" onclick="closeModal('addTeacherModal')">×</button>
+    </div>
+    <form method="POST" action="{{ url_for('admin_add_teacher') }}">
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Full Name *</label>
+          <input type="text" name="full_name" class="form-control" placeholder="Ms. Sarah" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email *</label>
+          <input type="email" name="email" class="form-control" placeholder="teacher@school.edu" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password *</label>
+          <input type="password" name="password" class="form-control" placeholder="Min 6 characters" required minlength="6">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone Number *</label>
+          <input type="text" name="phone" class="form-control" placeholder="+1 234 567 8900" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">School *</label>
+        <input type="text" name="school" class="form-control" placeholder="e.g. CIS" required>
+      </div>
+      {% if classes %}
+      <div class="form-group">
+        <label class="form-label">Assign Classes (Select classes this teacher will manage)</label>
+        <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:.5rem; padding:.75rem; background:var(--bg3); border-radius:var(--radius); border:1px solid var(--border);">
+          {% for c in classes %}
+          <label class="form-check">
+            <input type="checkbox" name="class_ids" value="{{ c.id }}">
+            {{ c.name }} <span class="text-xs text-muted">({{ c.school_name }})</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      <div style="display:flex; gap:.75rem; margin-top:.5rem;">
+        <button class="btn btn-primary" type="submit">+ Add Teacher</button>
+        <button class="btn btn-ghost" type="button" onclick="closeModal('addTeacherModal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterTeachers(q) {
+  document.querySelectorAll('.t-row').forEach(r => {
+    r.style.display = r.dataset.search.includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}
